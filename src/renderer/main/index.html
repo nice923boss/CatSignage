@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: catmedia:; media-src 'self'">
+<title>CatSignage 電子看板</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">CatSignage</span>
+    <span class="subtitle">電子看板系統</span>
+  </div>
+  <div class="topbar-right">
+    <span id="mode-badge" class="badge">載入中</span>
+    <span id="tailnet-badge" class="badge badge-muted">Tailscale 偵測中</span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidenav">
+    <button class="nav-item active" data-page="settings">設定</button>
+    <button class="nav-item" data-page="library" data-mode="sender">媒體庫</button>
+    <button class="nav-item" data-page="playback" data-mode="receiver">播放</button>
+  </nav>
+
+  <main class="content">
+    <!-- 設定頁 -->
+    <section class="page active" id="page-settings">
+      <h1>設定</h1>
+
+      <div class="card">
+        <h2>執行模式</h2>
+        <p class="hint">同一個程式，選擇這台電腦要當發送端還是接收端。切換後設定會立即保存。</p>
+        <div class="mode-picker">
+          <button class="mode-card" id="pick-sender" data-mode="sender">
+            <span class="mode-title">發送端</span>
+            <span class="mode-desc">管理媒體庫與播放清單，供接收端下載</span>
+          </button>
+          <button class="mode-card" id="pick-receiver" data-mode="receiver">
+            <span class="mode-title">接收端</span>
+            <span class="mode-desc">下載素材並全螢幕輪播，現場播放電腦選這個</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card" id="sender-settings">
+        <h2>發送端設定</h2>
+        <div class="field-row">
+          <label for="sender-port">服務埠號</label>
+          <input type="number" id="sender-port" min="1024" max="65535">
+          <span class="field-note">接收端要填的埠號，預設 28480</span>
+        </div>
+        <div class="field-row">
+          <label for="default-seconds">圖片預設停留秒數</label>
+          <input type="number" id="default-seconds" min="1" max="600">
+          <span class="field-note">加入新圖片時套用，之後可逐張調整</span>
+        </div>
+        <div class="field-row">
+          <label for="transition">轉場效果</label>
+          <select id="transition"></select>
+          <span class="field-note">隨播放清單一起送到接收端</span>
+        </div>
+        <div class="field-row">
+          <label>服務位址</label>
+          <output id="serve-address" class="readout">尚未偵測</output>
+          <span class="field-note">只綁定 Tailscale 介面，其他網路連不到</span>
+        </div>
+      </div>
+
+      <div class="card" id="receiver-settings">
+        <h2>接收端設定</h2>
+        <div class="field-row">
+          <label for="sender-host">發送端 IP</label>
+          <input type="text" id="sender-host" placeholder="100.x.x.x" spellcheck="false">
+          <span class="field-note">發送端電腦的 Tailscale IP</span>
+        </div>
+        <div class="field-row">
+          <label for="sender-port-input">發送端埠號</label>
+          <input type="number" id="sender-port-input" min="1024" max="65535">
+          <span class="field-note">預設 28480</span>
+        </div>
+        <div class="field-row">
+          <label for="retention-value">素材保留期限</label>
+          <div class="combo">
+            <input type="number" id="retention-value" min="1">
+            <select id="retention-unit" aria-label="保留期限單位">
+              <option value="1">分鐘</option>
+              <option value="60">小時</option>
+              <option value="1440">天</option>
+            </select>
+          </div>
+          <span class="field-note" id="retention-note">已離開播放清單且超過此期限沒播過的檔案會自動清除</span>
+        </div>
+        <div class="field-row">
+          <label for="cache-limit">快取容量上限</label>
+          <div class="combo">
+            <input type="number" id="cache-limit" min="0" step="0.5">
+            <span class="combo-unit">GB</span>
+          </div>
+          <span class="field-note">超過時從最久沒播的舊素材開始刪，清單內的素材不刪；0 代表不限制</span>
+        </div>
+        <div class="field-row">
+          <label for="min-free">磁碟保留空間</label>
+          <div class="combo">
+            <input type="number" id="min-free" min="0" step="100">
+            <span class="combo-unit">MB</span>
+          </div>
+          <span class="field-note">下載後硬碟至少要剩這麼多；不夠時先回收舊素材，仍不夠就跳過該檔並顯示原因</span>
+        </div>
+        <div class="field-row">
+          <label for="autoplay-boot">開機自動播放</label>
+          <input type="checkbox" id="autoplay-boot">
+          <span class="field-note" id="autoplay-note">登入 Windows 後自動啟動 CatSignage 並直接進入全螢幕播放</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>系統資訊</h2>
+        <div class="info-grid">
+          <div><span class="info-label">本機 Tailscale IP</span><span id="info-tailnet">偵測中</span></div>
+          <div><span class="info-label">執行設定檔</span><span id="info-profile">default</span></div>
+          <div><span class="info-label">版本</span><span id="info-version">0.1.0</span></div>
+          <div><span class="info-label">資料夾</span><span id="info-userdata" class="path"></span></div>
+        </div>
+        <button class="btn btn-ghost" id="open-userdata">開啟資料夾</button>
+      </div>
+    </section>
+
+    <!-- 媒體庫頁 -->
+    <section class="page" id="page-library">
+      <h1>媒體庫</h1>
+
+      <div class="card">
+        <div class="lib-toolbar">
+          <button class="btn" id="add-files">加入素材</button>
+          <span class="lib-stats" id="lib-stats">尚未載入</span>
+        </div>
+        <p class="hint">支援 JPG、PNG、GIF、WebP、MP4、WebM。相同內容的檔案只保存一份，重複加入會被略過。加入時會複製一份到程式資料夾，原始檔可用「原檔位置」找到後自行刪除或搬走，不影響播放。</p>
+        <p class="lib-message hidden" id="lib-message"></p>
+      </div>
+
+      <div class="card">
+        <h2>供檔服務</h2>
+        <div class="field-row">
+          <label>目前狀態</label>
+          <output id="server-status" class="readout">未啟動</output>
+          <button class="btn btn-ghost" id="restart-server">重新啟動服務</button>
+        </div>
+        <div class="field-row">
+          <label>清單版本</label>
+          <output id="list-version" class="readout">-</output>
+          <span class="field-note">清單有任何變動就換號，接收端據此判斷要不要同步</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>播放清單</h2>
+        <table class="lib-table">
+          <thead>
+            <tr>
+              <th class="col-pos">順序</th>
+              <th class="col-thumb">預覽</th>
+              <th>名稱</th>
+              <th class="col-kind">類型</th>
+              <th class="col-size">大小</th>
+              <th class="col-dur">停留秒數</th>
+              <th class="col-act">操作</th>
+            </tr>
+          </thead>
+          <tbody id="lib-rows"></tbody>
+        </table>
+        <p class="empty" id="lib-empty">目前沒有素材，按上方「加入素材」開始。</p>
+      </div>
+
+      <div class="card">
+        <h2>最近存取記錄</h2>
+        <ul class="access-list" id="access-list"></ul>
+        <p class="hint">接收端每次取清單或下載檔案都會留下記錄，可用來確認同步是否正常。</p>
+      </div>
+    </section>
+
+    <!-- 播放頁 -->
+    <section class="page" id="page-playback">
+      <h1>播放</h1>
+
+      <div class="card">
+        <h2>發送端連線</h2>
+        <div class="field-row">
+          <label>發送端位址</label>
+          <output id="rx-endpoint" class="readout">尚未設定</output>
+          <button class="btn btn-ghost" id="rx-test">測試連線</button>
+        </div>
+        <p class="lib-message hidden" id="rx-message"></p>
+      </div>
+
+      <div class="card">
+        <h2>同步</h2>
+        <div class="lib-toolbar">
+          <button class="btn" id="rx-sync">立即同步</button>
+          <button class="btn btn-ghost" id="rx-resync">強制重新取得清單</button>
+          <span class="lib-stats" id="rx-stats">尚未同步</span>
+        </div>
+        <div class="field-row">
+          <label>目前狀態</label>
+          <output id="rx-status" class="readout">尚未同步</output>
+          <span class="field-note" id="rx-lastsync"></span>
+        </div>
+        <div class="progress hidden" id="rx-progress">
+          <div class="progress-track"><div class="progress-bar" id="rx-progress-bar"></div></div>
+          <span class="progress-text" id="rx-progress-text"></span>
+        </div>
+        <div class="field-row">
+          <label>清單版本</label>
+          <output id="rx-version" class="readout">-</output>
+          <span class="field-note">連不上發送端時改用本機快取繼續播放</span>
+        </div>
+        <div class="field-row">
+          <label>素材回收</label>
+          <output id="rx-retention" class="readout">尚未回收</output>
+          <span class="field-note">只回收已從清單移除的舊素材：超過保留期限，或快取超過容量上限時</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>本機素材</h2>
+        <table class="lib-table">
+          <thead>
+            <tr>
+              <th class="col-pos">順序</th>
+              <th>名稱</th>
+              <th class="col-kind">類型</th>
+              <th class="col-size">大小</th>
+              <th class="col-dur">停留秒數</th>
+              <th class="col-kind">狀態</th>
+            </tr>
+          </thead>
+          <tbody id="rx-rows"></tbody>
+        </table>
+        <p class="empty" id="rx-empty">尚未取得播放清單。</p>
+      </div>
+
+      <div class="card">
+        <h2>輪播播放</h2>
+        <div class="lib-toolbar">
+          <button class="btn" id="pb-start">開始播放</button>
+          <button class="btn btn-ghost" id="pb-stop">停止播放</button>
+          <span class="lib-stats" id="pb-elapsed"></span>
+        </div>
+        <div class="field-row">
+          <label>播放狀態</label>
+          <output id="pb-status" class="readout">未播放</output>
+          <span class="field-note">播放中按 Esc 離開全螢幕，尚未下載完成的素材不會進入輪播。</span>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="footer">製作者：黃政文</footer>
+<script src="app.js"></script>
+</body>
+</html>

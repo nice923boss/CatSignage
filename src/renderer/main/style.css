@@ -1,0 +1,290 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f6f8;
+  --card: #ffffff;
+  --line: #dfe3e8;
+  --text: #1f2430;
+  --muted: #6b7280;
+  --accent: #2f6fd0;
+  --accent-soft: #e8f0fc;
+}
+
+html, body {
+  height: 100%;
+  font-family: "Microsoft JhengHei", "Noto Sans TC", "PingFang TC", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  font-size: 15px;
+  user-select: none;
+}
+
+body { display: flex; flex-direction: column; }
+
+/* 頂欄 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.logo { font-size: 19px; font-weight: 700; letter-spacing: 0.3px; }
+.subtitle { font-size: 13px; color: var(--muted); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+.badge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid #cddffa;
+}
+.badge-muted { background: #f1f2f4; color: var(--muted); border-color: var(--line); }
+.badge-warn { background: #fdf1e3; color: #a35b12; border-color: #f3ddbf; }
+
+/* 版面 */
+.layout { flex: 1; display: flex; min-height: 0; }
+
+.sidenav {
+  width: 164px;
+  flex: none;
+  padding: 16px 12px;
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-item {
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.nav-item:hover { background: #f0f2f5; }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.nav-item.hidden { display: none; }
+
+.content { flex: 1; overflow-y: auto; padding: 24px 28px 40px; }
+.page { display: none; }
+.page.active { display: block; }
+
+h1 { font-size: 22px; font-weight: 700; margin-bottom: 18px; }
+h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+  max-width: 760px;
+}
+.card.hidden { display: none; }
+.card.placeholder { color: var(--muted); }
+.hint { color: var(--muted); font-size: 13px; margin-bottom: 14px; line-height: 1.7; }
+
+/* 模式選擇 */
+.mode-picker { display: flex; gap: 12px; }
+.mode-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  text-align: left;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+.mode-card:hover { border-color: #bcc6d4; }
+.mode-card.selected { border-color: var(--accent); background: var(--accent-soft); }
+.mode-title { font-size: 16px; font-weight: 700; }
+.mode-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* 欄位 */
+.field-row {
+  display: grid;
+  grid-template-columns: 150px 200px 1fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+.field-row label { font-size: 14px; }
+.field-note { font-size: 12px; color: var(--muted); }
+/* 數值加單位：輸入框與單位擠在同一欄 */
+.combo { display: flex; align-items: center; gap: 8px; }
+.combo input { flex: 1; min-width: 0; }
+/* 全域的 width: 100% 會讓單位選單吃滿整欄、把輸入框擠到看不見 */
+.combo select { flex: 0 0 auto; width: auto; }
+.combo-unit { font-size: 13px; color: var(--muted); }
+/* 勾選框不吃輸入框的 width: 100% */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  justify-self: start;
+  accent-color: var(--accent);
+}
+
+input, select {
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--text);
+  width: 100%;
+  user-select: text;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+input.invalid { border-color: #d04a4a; box-shadow: 0 0 0 3px #fbeaea; }
+
+.readout {
+  font-size: 14px;
+  padding: 7px 0;
+  color: var(--text);
+  user-select: text;
+}
+
+/* 系統資訊 */
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-bottom: 14px; }
+.info-grid > div { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.info-label { font-size: 12px; color: var(--muted); }
+.path { font-size: 12px; word-break: break-all; user-select: text; }
+
+.btn {
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+.btn:hover { background: #f0f2f5; }
+.btn-ghost { color: var(--accent); border-color: #cddffa; }
+
+/* 底部製作者標示 */
+.footer {
+  flex: none;
+  text-align: right;
+  padding: 6px 20px 8px;
+  font-size: 11px;
+  color: #9aa1ab;
+  background: var(--bg);
+}
+
+/* 通用隱藏 */
+.hidden { display: none; }
+
+/* 媒體庫 */
+.lib-toolbar { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.lib-stats { font-size: 13px; color: var(--muted); }
+.lib-message {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  line-height: 1.6;
+}
+.lib-message.error { background: #fdf1e3; color: #a35b12; }
+
+.lib-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lib-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 8px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.lib-table td { padding: 8px; border-bottom: 1px solid #f0f1f3; vertical-align: middle; }
+.lib-table tr:last-child td { border-bottom: none; }
+.col-pos { width: 48px; color: var(--muted); }
+.col-thumb { width: 96px; }
+.thumb { display: block; width: 80px; height: 45px; object-fit: contain; background: #eef0f3; border-radius: 4px; }
+.thumb-none { display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
+.col-kind { width: 60px; }
+.col-size { width: 90px; color: var(--muted); }
+.col-dur { width: 108px; }
+/* 寬度 1% 加不換行：欄寬剛好等於四顆按鈕，剩下的都留給名稱欄 */
+.col-act { width: 1%; white-space: nowrap; }
+.col-name { word-break: break-all; user-select: text; }
+.dur-input { width: 72px; padding: 4px 8px; font-size: 13px; }
+.muted { color: var(--muted); font-size: 13px; }
+.empty { font-size: 13px; color: var(--muted); padding: 14px 8px 4px; }
+
+.btn-mini { font-size: 12px; padding: 3px 9px; margin-right: 6px; }
+.btn-mini:last-child { margin-right: 0; }
+.btn-mini:disabled { color: #b9bec6; cursor: default; background: #fafbfc; }
+.btn-danger { color: #b03a3a; border-color: #eccfcf; }
+.btn-danger:hover { background: #fbeaea; }
+
+.readout.ok { color: #1f7a48; }
+.readout.warn { color: #a35b12; }
+
+.access-list { list-style: none; font-size: 13px; line-height: 1.9; margin-bottom: 10px; user-select: text; }
+.access-list li { font-variant-numeric: tabular-nums; color: var(--text); }
+
+/* 播放清單欄位多，固定寬的欄位加起來就快 640px，不放寬名稱欄會被擠成一行兩三個字；整頁一起放寬，卡片才對齊 */
+#page-library .card { max-width: 1040px; }
+/* 視窗拉窄時（最小 940 寬）四顆按鈕改排兩行，名稱欄才留得下字 */
+@media (max-width: 1050px) {
+  .col-act { white-space: normal; width: 140px; }
+  .col-act .btn-mini { margin-block: 2px; }
+}
+
+/* 供檔服務列：狀態文字長度不固定，第二欄改為自動寬 */
+#page-library .field-row { grid-template-columns: 110px auto 1fr; }
+#page-library .field-row .btn { justify-self: start; }
+
+/* ---- 播放頁 ---- */
+.progress.hidden { display: none; }
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 4px;
+}
+.progress-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: #e4e6ea;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  background: #2f6df6;
+  transition: width 0.2s linear;
+}
+.progress-text {
+  font-size: 12px;
+  color: #5b6270;
+  white-space: nowrap;
+}
+.state-ok { color: #1f7a45; }
+.state-wait { color: #a06400; }
+
+/* 播放頁的欄位列與媒體庫同樣需要自動寬度容納長訊息 */
+#page-playback .field-row { grid-template-columns: 110px auto 1fr; }
+#page-playback .field-row .btn { justify-self: start; }

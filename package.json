@@ -1,0 +1,73 @@
+{
+  "name": "catsignage",
+  "version": "0.2.0",
+  "description": "CatSignage 電子看板系統（發送端／接收端單一程式）",
+  "author": "黃政文",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nice923boss/CatSignage.git"
+  },
+  "main": "src/main/index.js",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "icon": "node scripts/make-icon.js",
+    "pack": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "tw.huangchengwen.catsignage",
+    "productName": "CatSignage",
+    "copyright": "製作者：黃政文",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "**/*",
+      "!scripts/**",
+      "!release/**",
+      "!build/**",
+      "!**/*.md",
+      "!提示詞.txt"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ],
+    "extraResources": [
+      {
+        "from": "docs/Tailscale-安裝指引.html",
+        "to": "Tailscale-安裝指引.html"
+      }
+    ],
+    "npmRebuild": false,
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "CatSignage 電子看板",
+      "installerLanguages": ["zh_TW"],
+      "language": "1028",
+      "artifactName": "CatSignage-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "CatSignage-Portable-${version}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "@electron/rebuild": "4.2.0",
+    "electron": "43.4.1",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3"
+  }
+}

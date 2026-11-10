@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>CatSignage 連線前置設定：安裝 Tailscale</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; padding: 32px 24px 64px;
+    font-family: "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+    line-height: 1.85; color: #1f2933; background: #f5f7fa;
+  }
+  main { max-width: 760px; margin: 0 auto; background: #fff; padding: 40px 44px 52px;
+         border-radius: 12px; box-shadow: 0 2px 16px rgba(31, 41, 51, .08); }
+  h1 { font-size: 26px; margin: 0 0 8px; }
+  .lead { color: #52606d; margin: 0 0 28px; }
+  h2 { font-size: 19px; margin: 34px 0 10px; padding-top: 18px; border-top: 1px solid #e4e7eb; }
+  h2:first-of-type { border-top: 0; padding-top: 0; }
+  ol, ul { padding-left: 22px; margin: 10px 0; }
+  li { margin: 6px 0; }
+  code { background: #eef1f5; padding: 2px 7px; border-radius: 4px;
+         font-family: Consolas, "Courier New", monospace; font-size: 14px; }
+  .box { background: #f0f6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; margin: 18px 0; border-radius: 0 6px 6px 0; }
+  .warn { background: #fff7ed; border-left-color: #f59e0b; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 15px; }
+  th, td { border: 1px solid #e4e7eb; padding: 9px 12px; text-align: left; vertical-align: top; }
+  th { background: #f5f7fa; white-space: nowrap; }
+  a { color: #2563eb; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>安裝 Tailscale，CatSignage 才連得起來</h1>
+<p class="lead">這台電腦上找不到 Tailscale 的連線位址，所以辦公室與門市之間還無法互相傳素材。照下面的步驟做完就好，全程大約五分鐘。</p>
+
+<h2>一、為什麼需要 Tailscale</h2>
+<p>CatSignage 沒有雲端伺服器，也沒有帳號密碼。辦公室電腦與門市電腦是直接連線傳檔，而這條線路由 Tailscale 建立。兩台電腦都裝好 Tailscale 並登入同一個帳號，才會彼此看得見。</p>
+<p>沒有裝 Tailscale 時，CatSignage 仍然可以開啟與設定，門市電腦也會繼續播放已經下載的素材，但是無法取得新素材。</p>
+
+<h2>二、安裝步驟</h2>
+<ol>
+  <li>用瀏覽器打開 <a href="https://tailscale.com/download/windows">https://tailscale.com/download/windows</a>，按「Download Tailscale for Windows」。</li>
+  <li>執行下載回來的安裝檔，一路按下一步完成安裝。過程中不需要改任何設定。</li>
+  <li>安裝完成後，Windows 右下角工作列會出現 Tailscale 圖示，並自動跳出登入畫面。</li>
+  <li>選擇登入方式（Google、Microsoft、GitHub 等皆可），<strong>兩台電腦務必登入同一個帳號</strong>。</li>
+  <li>登入完成後，瀏覽器會顯示連線成功，工作列圖示會從灰色變成正常狀態。</li>
+</ol>
+
+<div class="box warn">
+  <strong>兩台電腦要用同一個帳號。</strong>辦公室電腦登入 A 帳號、門市電腦登入 B 帳號的話，兩台會在不同的網路裡，永遠看不到對方。
+</div>
+
+<h2>三、確認裝好了</h2>
+<p>按下鍵盤 <code>Win</code> + <code>R</code>，輸入 <code>cmd</code> 按確定，在黑色視窗貼上這一行後按 Enter：</p>
+<p><code>tailscale ip -4</code></p>
+<p>畫面回一個 <code>100.</code> 開頭的位址（例如 <code>100.101.102.103</code>）就代表成功了。</p>
+
+<table>
+  <tr><th>看到什麼</th><th>代表</th><th>怎麼處理</th></tr>
+  <tr><td>100 開頭的位址</td><td>正常</td><td>回到 CatSignage，關掉程式再打開一次</td></tr>
+  <tr><td>找不到 tailscale 命令</td><td>還沒安裝</td><td>回到第二節重新安裝</td></tr>
+  <tr><td>提示尚未登入</td><td>裝好但沒登入</td><td>點工作列的 Tailscale 圖示，選 Log in</td></tr>
+</table>
+
+<h2>四、回到 CatSignage</h2>
+<ol>
+  <li>把 CatSignage 關掉，重新開啟。</li>
+  <li>辦公室電腦（發送端）在「媒體庫」看「供檔服務」那一列，顯示「供檔中 http://100.x.x.x:28480」就成功了。把這串位址記下來。</li>
+  <li>門市電腦（接收端）在「設定」頁把那串位址填進「發送端 IP」，埠號填 28480。</li>
+</ol>
+
+<h2>五、還是連不起來</h2>
+<table>
+  <tr><th>現象</th><th>檢查</th><th>處理方式</th></tr>
+  <tr><td>裝好了但還是沒有 100 位址</td><td>工作列圖示是否顯示已連線</td><td>點圖示選 Connect，或登出後重新登入</td></tr>
+  <tr><td>兩台都有位址但連不到</td><td>是否登入同一個帳號</td><td>在 <a href="https://login.tailscale.com/admin/machines">Tailscale 管理頁</a> 確認兩台都列在同一份清單裡</td></tr>
+  <tr><td>公司網路裝不起來</td><td>是否有防火牆或群組原則限制</td><td>請資訊人員協助放行 Tailscale</td></tr>
+  <tr><td>門市電腦畫面停在舊素材</td><td>辦公室電腦是否開著</td><td>辦公室電腦開機並打開 CatSignage，門市會自己補下載</td></tr>
+</table>
+
+<div class="box">
+  Tailscale 個人方案免費，一般門市使用量不需要付費。安裝後它會常駐在背景，開機自動連線，平時不需要再操作。
+</div>
+
+</main>
+</body>
+</html>
