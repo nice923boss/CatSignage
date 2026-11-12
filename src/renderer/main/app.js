@@ -33,6 +33,7 @@ function formatBytes(bytes) {
 
 const RETENTION_UNITS = [1440, 60, 1] // 天、小時、分鐘，顯示時挑能整除的最大單位
 const RETENTION_MAX_MINUTES = 3650 * 1440
+const CHECK_MAX_MINUTES = 1440
 
 function retentionDisplay(minutes) {
   const unit = RETENTION_UNITS.find((u) => minutes % u === 0) || 1
@@ -127,6 +128,12 @@ function renderSettings() {
   $('retention-unit').value = String(shown.unit)
   $('retention-value').max = Math.floor(RETENTION_MAX_MINUTES / shown.unit)
   $('retention-note').textContent = '已離開播放清單且超過 ' + describeMinutes(minutes) + '沒播過的檔案會自動清除'
+
+  const checkMinutes = config.receiver.checkIntervalMinutes
+  const checkUnit = checkMinutes % 60 === 0 ? 60 : 1
+  $('check-value').value = checkMinutes / checkUnit
+  $('check-unit').value = String(checkUnit)
+  $('check-value').max = Math.floor(CHECK_MAX_MINUTES / checkUnit)
 
   $('cache-limit').value = Math.round(config.receiver.maxCacheMB / 1024 * 100) / 100
   $('min-free').value = config.receiver.minFreeMB
@@ -265,6 +272,11 @@ function renderLibrary() {
   renderServer(server, state.tailnet)
   renderRows(items)
   renderAccess(access)
+
+  const previewing = Boolean(state.preview && state.preview.open)
+  $('preview-start').textContent = previewing ? '從頭預覽' : '預覽播放'
+  $('preview-start').disabled = items.length === 0
+  $('preview-stop').disabled = !previewing
 }
 
 function showMessage(text, isError) {
@@ -342,6 +354,7 @@ function renderPlayback() {
     $('rx-status').textContent = '接收端未啟用'
     $('rx-stats').textContent = '尚未同步'
     $('rx-retention').textContent = '接收端未啟用'
+    $('rx-nextcheck').textContent = '-'
     renderProgress(null)
     renderReceiverRows([])
     return
@@ -357,6 +370,11 @@ function renderPlayback() {
       '，已下載 ' + formatBytes(snapshot.readyBytes) + ' / ' + formatBytes(snapshot.totalBytes)
 
   $('rx-version').textContent = snapshot.listVersion || '-'
+  $('rx-nextcheck').textContent = snapshot.nextCheckAt
+    ? '每 ' + describeMinutes(snapshot.checkIntervalMinutes) + '檢查一次，下次 ' +
+      new Date(snapshot.nextCheckAt).toLocaleString('zh-Hant', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) +
+      (snapshot.status === 'offline' || snapshot.status === 'error' ? '（上次未完成，提早重試）' : '')
+    : snapshot.status === 'checking' || snapshot.status === 'downloading' ? '同步中' : '-'
   $('rx-lastsync').textContent = snapshot.lastSyncAt
     ? '上次同步 ' + new Date(snapshot.lastSyncAt).toLocaleTimeString('zh-Hant')
     : '尚未成功同步過'
@@ -487,6 +505,14 @@ function init() {
   $('retention-value').addEventListener('change', applyRetention)
   $('retention-unit').addEventListener('change', applyRetention)
 
+  const applyCheckInterval = () => {
+    const unit = Number($('check-unit').value) || 60
+    const value = clampInt($('check-value').value, 1, Math.floor(CHECK_MAX_MINUTES / unit), 1)
+    apply({ receiver: { checkIntervalMinutes: value * unit } })
+  }
+  $('check-value').addEventListener('change', applyCheckInterval)
+  $('check-unit').addEventListener('change', applyCheckInterval)
+
   $('cache-limit').addEventListener('change', () => {
     const gb = Number($('cache-limit').value)
     const mb = Number.isFinite(gb) && gb > 0 ? Math.round(gb * 1024) : 0
@@ -513,6 +539,12 @@ function init() {
       button.textContent = '加入素材'
     }
   })
+
+  $('preview-start').addEventListener('click', async () => {
+    const result = await api.sender.preview()
+    showMessage(result.ok ? '預覽播放中，共 ' + result.itemCount + ' 個項目（Esc 關閉）' : result.error, !result.ok)
+  })
+  $('preview-stop').addEventListener('click', () => api.sender.previewStop())
 
   $('restart-server').addEventListener('click', async () => {
     const result = await api.sender.restartServer()

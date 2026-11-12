@@ -27,6 +27,7 @@ const DEFAULTS = Object.freeze({
     maxCacheMB: 0, // 素材快取容量上限，0 代表不限制
     minFreeMB: 500, // 下載後磁碟至少要留下的空間，避免把系統碟塞滿
     autoPlayOnBoot: false, // 開機自動啟動並直接進播放
+    checkIntervalMinutes: 60, // 多久問一次發送端清單有沒有變，有變就自動下載並更新輪播
   }),
 })
 
@@ -56,6 +57,7 @@ function normalize(raw) {
   receiver.retentionMinutes = clampNumber(receiver.retentionMinutes, 1, 3650 * 1440, DEFAULTS.receiver.retentionMinutes)
   receiver.maxCacheMB = clampNumber(receiver.maxCacheMB, 0, 1024 * 1024 * 16, DEFAULTS.receiver.maxCacheMB)
   receiver.minFreeMB = clampNumber(receiver.minFreeMB, 0, 1024 * 1024, DEFAULTS.receiver.minFreeMB)
+  receiver.checkIntervalMinutes = clampNumber(receiver.checkIntervalMinutes, 1, 1440, DEFAULTS.receiver.checkIntervalMinutes)
   return {
     mode: src.mode === 'receiver' ? 'receiver' : 'sender',
     sender,

@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('catsignage', {
     move: (itemId, delta) => ipcRenderer.invoke('sender:move', itemId, delta),
     setDuration: (itemId, seconds) => ipcRenderer.invoke('sender:setDuration', itemId, seconds),
     restartServer: () => ipcRenderer.invoke('sender:restartServer'),
+    preview: () => ipcRenderer.invoke('sender:preview'),
+    previewStop: () => ipcRenderer.invoke('sender:previewStop'),
   },
   receiver: {
     test: () => ipcRenderer.invoke('receiver:test'),

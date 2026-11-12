@@ -1,6 +1,6 @@
 {
   "name": "catsignage",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CatSignage 電子看板系統（發送端／接收端單一程式）",
   "author": "黃政文",
   "license": "MIT",

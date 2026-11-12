@@ -82,6 +82,17 @@
           <span class="field-note">預設 28480</span>
         </div>
         <div class="field-row">
+          <label for="check-value">檢查更新間隔</label>
+          <div class="combo">
+            <input type="number" id="check-value" min="1">
+            <select id="check-unit" aria-label="檢查間隔單位">
+              <option value="1">分鐘</option>
+              <option value="60">小時</option>
+            </select>
+          </div>
+          <span class="field-note" id="check-note">每隔這段時間問發送端清單有沒有更新，有就自動下載並換上新內容；預設 1 小時，最長 24 小時</span>
+        </div>
+        <div class="field-row">
           <label for="retention-value">素材保留期限</label>
           <div class="combo">
             <input type="number" id="retention-value" min="1">
@@ -135,9 +146,12 @@
       <div class="card">
         <div class="lib-toolbar">
           <button class="btn" id="add-files">加入素材</button>
+          <button class="btn btn-ghost" id="preview-start">預覽播放</button>
+          <button class="btn btn-ghost" id="preview-stop">停止預覽</button>
           <span class="lib-stats" id="lib-stats">尚未載入</span>
         </div>
         <p class="hint">支援 JPG、PNG、GIF、WebP、MP4、WebM。相同內容的檔案只保存一份，重複加入會被略過。加入時會複製一份到程式資料夾，原始檔可用「原檔位置」找到後自行刪除或搬走，不影響播放。</p>
+        <p class="hint">「預覽播放」會開一個視窗，照目前的順序、停留秒數與轉場輪播，用來確認節奏；預覽中修改清單會從下一項起套用。視窗內按 F11 切換全螢幕，按 Esc 關閉。</p>
         <p class="lib-message hidden" id="lib-message"></p>
       </div>
 
@@ -206,6 +220,11 @@
           <label>目前狀態</label>
           <output id="rx-status" class="readout">尚未同步</output>
           <span class="field-note" id="rx-lastsync"></span>
+        </div>
+        <div class="field-row">
+          <label>自動檢查</label>
+          <output id="rx-nextcheck" class="readout">-</output>
+          <span class="field-note">清單有更新時自動下載，播放中會從下一項起換上新內容；間隔可在設定頁調整</span>
         </div>
         <div class="progress hidden" id="rx-progress">
           <div class="progress-track"><div class="progress-bar" id="rx-progress-bar"></div></div>

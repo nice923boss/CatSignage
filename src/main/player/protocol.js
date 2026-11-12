@@ -3,6 +3,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 const store = require('../db/receiver')
+const senderStore = require('../db/sender')
 const thumbs = require('../sender/thumbs')
 const { kindOf } = require('../lib/media-kind')
 
@@ -22,7 +23,8 @@ function register() {
 }
 
 // 檔名就是內容雜湊，格式固定，任何不合格式的請求都不必再往下查
-// catmedia://media/<hash>.<ext> 是接收端素材，catmedia://thumb/<hash>.png 是發送端媒體庫縮圖
+// catmedia://media/<hash>.<ext> 是接收端素材，catmedia://thumb/<hash>.png 是發送端媒體庫縮圖，
+// catmedia://library/<hash>.<ext> 是發送端媒體庫原檔（預覽播放用）
 function resolve(urlString) {
   const url = new URL(urlString)
   const name = decodeURIComponent(url.pathname.replace(/^\//, ''))
@@ -31,10 +33,11 @@ function resolve(urlString) {
     const full = path.join(thumbs.dir(), name)
     return fs.existsSync(full) ? full : null
   }
-  if (url.host !== 'media') return null
+  if (url.host !== 'media' && url.host !== 'library') return null
   if (!NAME_RE.test(name)) return null
   if (!kindOf(name.split('.').pop())) return null
-  const full = path.join(store.receivedDir(), name)
+  const dir = url.host === 'library' ? senderStore.mediaDir() : store.receivedDir()
+  const full = path.join(dir, name)
   return fs.existsSync(full) ? full : null
 }
 
@@ -50,4 +53,8 @@ function urlFor(hash, ext) {
   return SCHEME + '://media/' + hash + '.' + ext
 }
 
-module.exports = { register, handle, urlFor, resolve, SCHEME }
+function libraryUrlFor(hash, ext) {
+  return SCHEME + '://library/' + hash + '.' + ext
+}
+
+module.exports = { register, handle, urlFor, libraryUrlFor, resolve, SCHEME }

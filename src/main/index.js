@@ -5,6 +5,7 @@ const config = require('./config')
 const sender = require('./sender')
 const receiver = require('./receiver')
 const player = require('./player')
+const preview = require('./sender/preview')
 const autostart = require('./autostart')
 const mediaProtocol = require('./player/protocol')
 const { tailnetIPv4 } = require('./lib/tailnet')
@@ -51,6 +52,7 @@ function createMainWindow() {
     mainWindow = null
     // 待命中的播放視窗是隱藏的，不收掉的話所有視窗都關了程式也不會結束
     if (!player.isPlaying()) player.stop()
+    preview.stop()
   })
 }
 
@@ -67,6 +69,7 @@ function buildState() {
     sender: sender.snapshot(),
     receiver: receiver.snapshot(),
     player: player.snapshot(),
+    preview: { open: preview.isOpen() },
     autoStart: autostart.status(PROFILE),
     userDataPath: app.getPath('userData'),
   }
@@ -87,6 +90,7 @@ function broadcastAccess(entries) {
 function broadcastState() {
   // 每完成一支下載都會走到這裡，順手把新的就緒集合推給播放視窗
   player.push(receiver.snapshot())
+  preview.push() // 發送端預覽開著時，清單、秒數、轉場一改就跟著換
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send('state:changed', buildState())
   }
@@ -95,7 +99,10 @@ function broadcastState() {
 // 設定變更後同步調整服務狀態，使用者不必自己重開程式
 async function applyMode(before, after) {
   if (before.mode !== after.mode) {
-    if (before.mode === 'sender') await sender.deactivate()
+    if (before.mode === 'sender') {
+      preview.stop()
+      await sender.deactivate()
+    }
     if (before.mode === 'receiver') {
       player.stop()
       await receiver.deactivate()
@@ -115,6 +122,9 @@ async function applyMode(before, after) {
       sender.library.bumpVersion() // 轉場屬於清單內容，改了就要換版本號
     }
     return
+  }
+  if (before.receiver.checkIntervalMinutes !== after.receiver.checkIntervalMinutes) {
+    receiver.reschedule()
   }
   // 接收端改了發送端位址，立刻重新同步，使用者不必自己按按鈕
   if (before.receiver.senderHost !== after.receiver.senderHost ||
@@ -170,6 +180,17 @@ app.whenReady().then(async () => {
     sender.library.setDuration(itemId, seconds)
     broadcastState()
   })
+  ipcMain.handle('sender:preview', () => {
+    if (config.load().mode !== 'sender') return { ok: false, error: '目前不是發送端模式' }
+    const result = preview.start()
+    broadcastState()
+    return result
+  })
+  ipcMain.handle('sender:previewStop', () => {
+    const result = preview.stop()
+    broadcastState()
+    return result
+  })
   ipcMain.handle('sender:restartServer', async () => {
     const result = await sender.restartServer()
     broadcastState()
@@ -178,6 +199,7 @@ app.whenReady().then(async () => {
 
   player.registerIpc()
   player.setOnClosed(broadcastState)
+  preview.setOnClosed(broadcastState)
 
   ipcMain.handle('player:start', async () => {
     if (config.load().mode !== 'receiver') return { ok: false, error: '目前不是接收端模式' }
@@ -223,6 +245,7 @@ app.whenReady().then(async () => {
 
 app.on('before-quit', async () => {
   player.stop()
+  preview.stop()
   await sender.deactivate()
   await receiver.deactivate()
 })
